@@ -1,80 +1,75 @@
 package com.phonepe.models;
 
-import com.phonepe.models.enums.OrderType;
-
-import java.sql.Timestamp;
+import java.time.Instant;
 
 public class Trade {
-    private String tradeId;
-    private OrderType tradeType;
-    private String buyerOrderId;
-    private String sellerOrderId;
-    private String stockSymbol;
-    private int quantity;
-    private int price;
-    private Timestamp createTime;
+    private final String tradeId;
+    private final TradeType tradeType;
+    private final String buyerOrderId;
+    private final String sellerOrderId;
+    private final String stockSymbol;
+    private final int quantity;
+    private final double price;
+    private final Instant tradeTimestamp;
+
+    public Trade(String tradeId, TradeType tradeType, String buyerOrderId, String sellerOrderId, String stockSymbol, int quantity, double price, Instant tradeTimestamp) {
+        this.tradeId = tradeId;
+        this.tradeType = tradeType;
+        this.buyerOrderId = buyerOrderId;
+        this.sellerOrderId = sellerOrderId;
+        this.stockSymbol = stockSymbol;
+        this.quantity = quantity;
+        this.price = price;
+        this.tradeTimestamp = tradeTimestamp;
+    }
+
+    public TradeType getTradeType() {
+        return tradeType;
+    }
 
     public String getTradeId() {
         return tradeId;
     }
 
-    public void setTradeId(String tradeId) {
-        this.tradeId = tradeId;
-    }
-
-    public OrderType getTradeType() {
-        return tradeType;
-    }
-
-    public void setTradeType(OrderType tradeType) {
-        this.tradeType = tradeType;
+    public double getPrice() {
+        return price;
     }
 
     public String getBuyerOrderId() {
         return buyerOrderId;
     }
 
-    public void setBuyerOrderId(String buyerOrderId) {
-        this.buyerOrderId = buyerOrderId;
-    }
-
     public String getSellerOrderId() {
         return sellerOrderId;
-    }
-
-    public void setSellerOrderId(String sellerOrderId) {
-        this.sellerOrderId = sellerOrderId;
     }
 
     public String getStockSymbol() {
         return stockSymbol;
     }
 
-    public void setStockSymbol(String stockSymbol) {
-        this.stockSymbol = stockSymbol;
-    }
-
     public int getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
+    public Instant getTradeTimestamp() {
+        return tradeTimestamp;
     }
 
-    public int getPrice() {
-        return price;
+    @Override
+    public String toString() {
+        return "Trade{" +
+                "tradeId='" + tradeId + '\'' +
+                ", tradeType=" + tradeType +
+                ", buyerOrderId='" + buyerOrderId + '\'' +
+                ", sellerOrderId='" + sellerOrderId + '\'' +
+                ", stockSymbol='" + stockSymbol + '\'' +
+                ", quantity=" + quantity +
+                ", price=" + price +
+                ", tradeTimestamp=" + tradeTimestamp +
+                '}';
     }
 
-    public void setPrice(int price) {
-        this.price = price;
-    }
-
-    public Timestamp getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(Timestamp createTime) {
-        this.createTime = createTime;
+    public enum TradeType {
+        BUY, SELL
     }
 }

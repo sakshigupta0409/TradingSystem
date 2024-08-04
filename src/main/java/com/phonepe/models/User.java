@@ -1,40 +1,42 @@
 package com.phonepe.models;
 
 public class User {
-    private String userId;
-    private String name;
-    private String phoneNumber;
-    private String emailId;
+    private final String userId;
+    private final String userName;
+    private final String phoneNumber;
+    private final String emailId;
+
+    public User(String userId, String userName, String phoneNumber, String emailId) {
+        this.userId = userId;
+        this.userName = userName;
+        this.phoneNumber = phoneNumber;
+        this.emailId = emailId;
+    }
 
     public String getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public String getUserName() {
+        return userName;
     }
 
     public String getPhoneNumber() {
         return phoneNumber;
     }
 
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
     public String getEmailId() {
         return emailId;
     }
 
-    public void setEmailId(String emailId) {
-        this.emailId = emailId;
+    @Override
+    public String toString() {
+        return "User{" +
+                "userId='" + userId + '\'' +
+                ", userName='" + userName + '\'' +
+                ", phoneNumber='" + phoneNumber + '\'' +
+                ", emailId='" + emailId + '\'' +
+                '}';
     }
 }
+
