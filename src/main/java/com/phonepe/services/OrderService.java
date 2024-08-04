@@ -1,31 +1,33 @@
 package com.phonepe.services;
 
 import com.phonepe.models.Order;
+import com.phonepe.models.OrderStatus;
+import com.phonepe.models.OrderType;
 import com.phonepe.models.Trade;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.PriorityQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class OrderManager {
-    private final Map<String, Order> orders = new HashMap<>();
-    private final Map<String, PriorityQueue<Order>> orderBooks = new HashMap<>();
+public class OrderService {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private final TradeManager tradeManager;
+    private final DbService dbService;
+    private final TradeService tradeService;
 
-    public OrderManager(TradeManager tradeManager) {
-        this.tradeManager = tradeManager;
+    public OrderService(DbService dbService, TradeService tradeService) {
+        this.dbService = dbService;
+        this.tradeService = tradeService;
     }
 
     public void placeOrder(Order order) {
         lock.writeLock().lock();
         try {
-            orders.put(order.getOrderId(), order);
-            orderBooks
-                    .computeIfAbsent(order.getStockSymbol(), k -> new PriorityQueue<>(Comparator.comparing(Order::getAcceptedTimestamp)))
-                    .add(order);
+            dbService.addOrder(order);
+            dbService.addToOrderBook(order);
             System.out.println("Order placed: " + order);
-            executeOrders(order.getStockSymbol());
+            executeOrders(order.getStockId());
         } finally {
             lock.writeLock().unlock();
         }
@@ -34,14 +36,17 @@ public class OrderManager {
     public void modifyOrder(String orderId, int newQuantity, double newPrice) {
         lock.writeLock().lock();
         try {
-            Order oldOrder = orders.get(orderId);
-            if (oldOrder != null && oldOrder.getStatus() == Order.Status.ACCEPTED) {
-                Order newOrder = new Order(orderId, oldOrder.getUserId(), oldOrder.getOrderType(), oldOrder.getStockSymbol(), newQuantity, newPrice, oldOrder.getAcceptedTimestamp());
-                orders.put(orderId, newOrder);
-                orderBooks.get(oldOrder.getStockSymbol()).remove(oldOrder);
-                orderBooks.get(oldOrder.getStockSymbol()).add(newOrder);
+            Order oldOrder = dbService.getOrder(orderId);
+            if (oldOrder != null && oldOrder.getStatus() == OrderStatus.ACCEPTED) {
+                Order newOrder = new Order(oldOrder.getOrderId(), oldOrder.getAccountId(), oldOrder.getStockId(),
+                        oldOrder.getOrderType(), newQuantity, newPrice, Instant.now());
+                dbService.addOrder(newOrder);
+
+                PriorityQueue<Order> orderBook = dbService.getOrderBookForStockId(oldOrder.getStockId());
+                orderBook.remove(oldOrder);
+                orderBook.add(newOrder);
                 System.out.println("Order modified: " + newOrder);
-                executeOrders(oldOrder.getStockSymbol());
+                executeOrders(newOrder.getStockId());
             } else {
                 System.out.println("Order cannot be modified or does not exist.");
             }
@@ -53,10 +58,12 @@ public class OrderManager {
     public void cancelOrder(String orderId) {
         lock.writeLock().lock();
         try {
-            Order order = orders.get(orderId);
-            if (order != null && order.getStatus() == Order.Status.ACCEPTED) {
-                order.setStatus(Order.Status.CANCELED);
-                orderBooks.get(order.getStockSymbol()).remove(order);
+            Order order = dbService.getOrder(orderId);
+            if (order != null && order.getStatus() == OrderStatus.ACCEPTED) {
+                order.setStatus(OrderStatus.CANCELLED);
+
+                PriorityQueue<Order> orderBook = dbService.getOrderBookForStockId(order.getStockId());
+                orderBook.remove(order);
                 System.out.println("Order canceled: " + order);
             } else {
                 System.out.println("Order cannot be canceled or does not exist.");
@@ -66,10 +73,10 @@ public class OrderManager {
         }
     }
 
-    public void queryOrder(String orderId) {
+    public void showOrder(String orderId) {
         lock.readLock().lock();
         try {
-            Order order = orders.get(orderId);
+            Order order = dbService.getOrder(orderId);
             if (order != null) {
                 System.out.println("Order status: " + order);
             } else {
@@ -80,8 +87,9 @@ public class OrderManager {
         }
     }
 
-    private void executeOrders(String stockSymbol) {
-        PriorityQueue<Order> orderBook = orderBooks.get(stockSymbol);
+    private void executeOrders(String stockId) {
+
+        PriorityQueue<Order> orderBook = dbService.getOrderBookForStockId(stockId);
         if (orderBook == null || orderBook.isEmpty()) {
             return;
         }
@@ -93,27 +101,33 @@ public class OrderManager {
 
         // Matching logic
         List<Trade> trades = new ArrayList<>();
+
         for (int i = 0; i < ordersToMatch.size(); i++) {
             Order buyOrder = ordersToMatch.get(i);
-            if (buyOrder.getOrderType() == Order.OrderType.BUY) {
+            if (buyOrder.getOrderType() == OrderType.BUY) {
                 for (int j = i + 1; j < ordersToMatch.size(); j++) {
                     Order sellOrder = ordersToMatch.get(j);
-                    if (sellOrder.getOrderType() == Order.OrderType.SELL && buyOrder.getPrice() >= sellOrder.getPrice()) {
+                    if (sellOrder.getOrderType() == OrderType.SELL && buyOrder.getPrice() >= sellOrder.getPrice()) {
+
                         int quantity = Math.min(buyOrder.getQuantity(), sellOrder.getQuantity());
                         Trade trade = new Trade(
                                 "T" + System.currentTimeMillis(), // Simple trade ID
-                                Trade.TradeType.BUY,
+                                OrderType.BUY,
                                 buyOrder.getOrderId(),
                                 sellOrder.getOrderId(),
-                                stockSymbol,
+                                stockId,
                                 quantity,
                                 sellOrder.getPrice(),
                                 Instant.now()
                         );
                         trades.add(trade);
-                        tradeManager.addTrade(trade);
-                        buyOrder = new Order(buyOrder.getOrderId(), buyOrder.getUserId(), buyOrder.getOrderType(), buyOrder.getStockSymbol(), buyOrder.getQuantity() - quantity, buyOrder.getPrice(), buyOrder.getAcceptedTimestamp());
-                        sellOrder = new Order(sellOrder.getOrderId(), sellOrder.getUserId(), sellOrder.getOrderType(), sellOrder.getStockSymbol(), sellOrder.getQuantity() - quantity, sellOrder.getPrice(), sellOrder.getAcceptedTimestamp());
+                        tradeService.addTrade(trade);
+
+
+                        buyOrder = new Order(buyOrder.getOrderId(), buyOrder.getAccountId(), buyOrder.getStockId(), buyOrder.getOrderType(),
+                                buyOrder.getQuantity() - quantity, buyOrder.getPrice(), buyOrder.getAcceptedTimestamp());
+                        sellOrder = new Order(sellOrder.getOrderId(), sellOrder.getAccountId(), sellOrder.getStockId(), sellOrder.getOrderType(),
+                                sellOrder.getQuantity() - quantity, sellOrder.getPrice(), sellOrder.getAcceptedTimestamp());
                         if (buyOrder.getQuantity() > 0) {
                             orderBook.add(buyOrder);
                         }
@@ -131,5 +145,5 @@ public class OrderManager {
             System.out.println("Trade executed: " + trade);
         }
     }
-}
 
+}

@@ -1,10 +1,10 @@
 package com.phonepe.models;
 
 public class User {
-    private final String userId;
-    private final String userName;
-    private final String phoneNumber;
-    private final String emailId;
+    private String userId;
+    private String userName;
+    private String phoneNumber;
+    private String emailId;
 
     public User(String userId, String userName, String phoneNumber, String emailId) {
         this.userId = userId;
@@ -17,26 +17,32 @@ public class User {
         return userId;
     }
 
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
     public String getUserName() {
         return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public String getPhoneNumber() {
         return phoneNumber;
     }
 
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
     public String getEmailId() {
         return emailId;
     }
 
-    @Override
-    public String toString() {
-        return "User{" +
-                "userId='" + userId + '\'' +
-                ", userName='" + userName + '\'' +
-                ", phoneNumber='" + phoneNumber + '\'' +
-                ", emailId='" + emailId + '\'' +
-                '}';
+    public void setEmailId(String emailId) {
+        this.emailId = emailId;
     }
 }
 

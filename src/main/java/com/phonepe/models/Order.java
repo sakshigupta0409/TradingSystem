@@ -3,82 +3,102 @@ package com.phonepe.models;
 import java.time.Instant;
 
 public class Order {
-    private final String orderId;
-    private final String userId;
-    private final OrderType orderType;
-    private final String stockSymbol;
-    private final int quantity;
-    private final double price;
-    private final Instant acceptedTimestamp;
-    private Status status;
+    private String orderId;
+    private String accountId;
+    private String stockId;
+    private OrderType orderType;
+    private OrderStatus status;
+    private int quantity;
+    private double price;
+    private Instant acceptedTimestamp;
 
-    public Order(String orderId, String userId, OrderType orderType, String stockSymbol, int quantity, double price, Instant acceptedTimestamp) {
+    public Order(String orderId, String accountId, String stockId, OrderType orderType, int quantity, double price, Instant acceptedTimestamp) {
         this.orderId = orderId;
-        this.userId = userId;
+        this.accountId = accountId;
+        this.stockId = stockId;
         this.orderType = orderType;
-        this.stockSymbol = stockSymbol;
+        this.status = OrderStatus.ACCEPTED;
         this.quantity = quantity;
         this.price = price;
         this.acceptedTimestamp = acceptedTimestamp;
-        this.status = Status.ACCEPTED;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
-    public Instant getAcceptedTimestamp() {
-        return acceptedTimestamp;
     }
 
     public String getOrderId() {
         return orderId;
     }
 
-    public String getUserId() {
-        return userId;
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
+
+    public String getAccountId() {
+        return accountId;
+    }
+
+    public void setAccountId(String accountId) {
+        this.accountId = accountId;
+    }
+
+    public String getStockId() {
+        return stockId;
+    }
+
+    public void setStockId(String stockId) {
+        this.stockId = stockId;
     }
 
     public OrderType getOrderType() {
         return orderType;
     }
 
-    public String getStockSymbol() {
-        return stockSymbol;
+    public void setOrderType(OrderType orderType) {
+        this.orderType = orderType;
+    }
+
+    public OrderStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(OrderStatus status) {
+        this.status = status;
     }
 
     public int getQuantity() {
         return quantity;
     }
 
-    public Status getStatus() {
-        return status;
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public Instant getAcceptedTimestamp() {
+        return acceptedTimestamp;
+    }
+
+    public void setAcceptedTimestamp(Instant acceptedTimestamp) {
+        this.acceptedTimestamp = acceptedTimestamp;
     }
 
     @Override
     public String toString() {
         return "Order{" +
                 "orderId='" + orderId + '\'' +
-                ", userId='" + userId + '\'' +
+                ", accountId='" + accountId + '\'' +
+                ", stockId='" + stockId + '\'' +
                 ", orderType=" + orderType +
-                ", stockSymbol='" + stockSymbol + '\'' +
+                ", status=" + status +
                 ", quantity=" + quantity +
                 ", price=" + price +
                 ", acceptedTimestamp=" + acceptedTimestamp +
-                ", status=" + status +
                 '}';
-    }
-
-    public enum OrderType {
-        BUY, SELL
-    }
-
-    public enum Status {
-        ACCEPTED, REJECTED, CANCELED, EXECUTED
     }
 }
 
